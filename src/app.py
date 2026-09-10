@@ -1,7 +1,6 @@
-import mysql.connector
+import pandas as pd
 import streamlit as st
-from mysql.connector import Error
-
+from db import get_connection, run_query
 
 st.set_page_config(
     page_title="Smart Hospital Management System",
@@ -10,61 +9,82 @@ st.set_page_config(
 )
 
 st.title("🏥 Smart Hospital Management System")
-st.write("Hospital database overview")
-
 
 st.sidebar.header("Database Connection")
 
+default_password = st.session_state.get("db_password", "")
 db_password = st.sidebar.text_input(
     "MySQL root password",
+    value=default_password,
     type="password",
 )
 
-if not db_password:
-    st.info("Enter your MySQL password in the sidebar to continue.")
+if db_password:
+    st.session_state["db_password"] = db_password
+
+if not st.session_state.get("db_password"):
+    st.info("Enter your MySQL root password in the sidebar to continue.")
     st.stop()
 
-
-connection = None
-
+# Test connection
 try:
-    connection = mysql.connector.connect(
-        host="localhost",
-        port=3306,
-        user="root",
-        password=db_password,
-        database="smart_hospital",
-    )
+    conn = get_connection()
+    conn.close()
+    st.success("Connected to MySQL database 'smart_hospital' successfully.")
+except Exception as err:
+    st.error(f"Database connection failed: {err}")
+    st.stop()
 
-    cursor = connection.cursor()
+st.header("Project Overview")
+st.write(
+    """
+Welcome to the **Smart Hospital Management System** database demonstration app. 
+This application provides an interactive interface for exploring, querying, and managing 
+the relational hospital dataset stored in MySQL 8.
 
-    queries = {
-        "Patients": "SELECT COUNT(*) FROM patient",
-        "Admissions": "SELECT COUNT(*) FROM admission",
-        "Prescriptions": "SELECT COUNT(*) FROM prescription",
-        "Bills": "SELECT COUNT(*) FROM billing",
-    }
+### Navigation Overview
+- **1 Browse Tables**: Inspect column data types and browse rows for all 19 relational tables.
+- **2 SQL Queries**: Execute prebuilt complex queries (3+ JOINs, Window functions, Subqueries, Aggregates) or test custom SELECT queries.
+- **3 Search**: Lookup patient profiles and view linked clinical, pharmacy, diagnostic, insurance, and billing records.
+- **4 Manage Records**: Test CRUD operations and witness MySQL constraint enforcement (PK, FK, CHECK).
+- **5 Schema**: Inspect Foreign Keys, CHECK constraints, and full DDL script.
+"""
+)
 
-    results = {}
+st.header("Database Summary (19 Tables)")
 
-    for label, query in queries.items():
-        cursor.execute(query)
-        results[label] = cursor.fetchone()[0]
+TABLES = [
+    "admission",
+    "bed",
+    "billing",
+    "billing_detail",
+    "department",
+    "diagnostic_test",
+    "disease",
+    "doctor",
+    "drug",
+    "drug_inventory",
+    "drug_manufacturer",
+    "employee",
+    "insurance_provider",
+    "patient",
+    "patient_diagnostic",
+    "patient_insurance",
+    "prescription",
+    "staff_assignment",
+    "ward",
+]
 
-    cursor.close()
+counts = []
+for table in TABLES:
+    df_count = run_query(f"SELECT COUNT(*) AS row_count FROM `{table}`")
+    if not df_count.empty:
+        counts.append(
+            {"Table Name": table, "Total Rows": int(df_count.iloc[0]["row_count"])}
+        )
 
-    st.success("Connected to MySQL successfully.")
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    col1.metric("Patients", f"{results['Patients']:,}")
-    col2.metric("Admissions", f"{results['Admissions']:,}")
-    col3.metric("Prescriptions", f"{results['Prescriptions']:,}")
-    col4.metric("Bills", f"{results['Bills']:,}")
-
-except Error as error:
-    st.error(f"Database connection failed: {error}")
-
-finally:
-    if connection is not None and connection.is_connected():
-        connection.close()
+if counts:
+    df_summary = pd.DataFrame(counts)
+    total_rows = df_summary["Total Rows"].sum()
+    st.subheader(f"Total Rows Across Database: {total_rows:,}")
+    st.dataframe(df_summary, use_container_width=True, hide_index=True)
