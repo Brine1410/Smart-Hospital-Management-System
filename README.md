@@ -142,10 +142,6 @@ Open `http://localhost:8501`, enter your MySQL password in the sidebar, and brow
 - All queries that take user input use parameterized placeholders (`%s`); no SQL is built with string formatting.
 - `.env`, `.venv/`, and anything matching `*password*` or `*credentials*` are excluded via `.gitignore`.
 
-## Contributors
-
-- **Brine1410** — database design, schema, data cleaning, ETL pipeline
-- **Raed-Tanwar** — Streamlit frontend, schema fix for `patient_insurance`
 
 ## License
 
