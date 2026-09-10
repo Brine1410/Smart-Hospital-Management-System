@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+
+# PyCharm
+.idea/
+
+# Secrets
+.env
+.env.*
+secrets/
+*password*
+*credentials*
+
+# Python local files
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
