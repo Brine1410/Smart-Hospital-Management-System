@@ -347,7 +347,7 @@ CREATE TABLE patient_insurance (
     patient_id INT UNSIGNED NOT NULL,
     insurance_provider_id INT UNSIGNED NOT NULL,
 
-    CONSTRAINT uq_patient_insurance_policy UNIQUE (policy_number),
+
 
     CONSTRAINT fk_patient_insurance_patient
         FOREIGN KEY (patient_id)
